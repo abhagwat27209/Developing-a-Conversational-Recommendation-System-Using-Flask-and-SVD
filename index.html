@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Movie Recommendation Chatbot</title>
+    <style>
+        /* General layout styling */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+
+        .chat-container {
+            background-color: #ffffff;
+            width: 350px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Chatbox styling */
+        #chatbox {
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        #chatbox div {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            max-width: 80%;
+        }
+
+        #chatbox div:nth-child(even) {
+            background-color: #e9f5ff;
+            align-self: flex-start;
+            color: #333;
+        }
+
+        #chatbox div:nth-child(odd) {
+            background-color: #007bff;
+            color: #fff;
+            align-self: flex-end;
+        }
+
+        /* Input fields and buttons styling */
+        .input-section {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-section input[type="text"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .input-section button {
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .input-section button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chatbox"></div>
+        <div class="input-section">
+            <input type="text" id="user-input" placeholder="Enter a genre (e.g., Action)">
+            <button id="recommend-btn">Get Recommendation</button>
+            <input type="text" id="feedback-input" placeholder="Feedback (liked/disliked)">
+            <button id="feedback-btn">Submit Feedback</button>
+        </div>
+    </div>
+
+    <script>
+        const chatbox = document.getElementById("chatbox");
+        const userInput = document.getElementById("user-input");
+        const feedbackInput = document.getElementById("feedback-input");
+
+        function appendMessage(message, sender) {
+            const msgDiv = document.createElement("div");
+            msgDiv.innerText = `${sender}: ${message}`;
+            chatbox.appendChild(msgDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        document.getElementById("recommend-btn").onclick = function() {
+            const userText = userInput.value;
+            appendMessage(userText, "You");
+
+            fetch("/get_recommendation", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ user_input: userText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                appendMessage(data, "Chatbot");
+            });
+        };
+
+        document.getElementById("feedback-btn").onclick = function() {
+            const feedbackText = feedbackInput.value;
+            const genre = userInput.value;
+
+            appendMessage(feedbackText, "You");
+
+            fetch("/submit_feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ feedback: feedbackText, genre: genre })
+            })
+            .then(response => response.json())
+            .then(data => {
+                appendMessage(data.status, "Chatbot");
+                appendMessage("Next recommendation: " + data.next_recommendation, "Chatbot");
+            });
+        };
+    </script>
+</body>
+</html>
